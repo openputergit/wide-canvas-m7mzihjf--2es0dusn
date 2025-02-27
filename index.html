@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeOptimizer.ai</title>
+    <script src="https://unpkg.com/prismjs@1.29.0/prism.js"></script>
+    <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        * {
+            font-family: 'Space Mono', monospace;
+        }
+        .neubrutalism {
+            border: 3px solid black;
+            box-shadow: 5px 5px 0px black;
+            transition: all 0.2s ease;
+        }
+        .neubrutalism:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 7px 7px 0px black;
+        }
+        .title-font {
+            font-family: 'Work Sans', sans-serif;
+        }
+        .loading {
+            display: none;
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-[#f0f0f0] p-4 md:p-8">
+    <main class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8">
+            <h1 class="title-font text-4xl md:text-6xl mb-4">CodeOptimizer.ai</h1>
+            <p class="text-lg">Transform your code into its best version with AI-powered optimizations and detailed explanations.</p>
+        </header>
+
+        <!-- Main Interface -->
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Input Section -->
+            <div class="space-y-4">
+                <div class="neubrutalism bg-[#FFE66D] p-4">
+                    <label class="block mb-2 font-bold">Select Language</label>
+                    <select id="language-select" class="neubrutalism bg-white w-full p-2 mb-4">
+                        <option value="javascript">JavaScript</option>
+                        <option value="python">Python</option>
+                        <option value="java">Java</option>
+                        <option value="cpp">C++</option>
+                        <option value="ruby">Ruby</option>
+                    </select>
+                    <label class="block mb-2 font-bold">Input Code</label>
+                    <textarea id="code-input" class="neubrutalism bg-white w-full h-64 p-4 font-mono" placeholder="Paste your code here..."></textarea>
+                </div>
+                <button id="optimize-btn" class="neubrutalism bg-[#FF6B6B] text-white px-8 py-3 w-full font-bold text-lg">
+                    Optimize Code <i class="bi bi-magic"></i>
+                </button>
+            </div>
+
+            <!-- Output Section -->
+            <div class="space-y-4">
+                <div id="output-container" class="neubrutalism bg-white p-4">
+                    <h2 class="font-bold mb-4">Optimized Code & Explanations</h2>
+                    <div id="loading" class="loading text-center py-8">
+                        <i class="bi bi-gear-wide-connected text-4xl"></i>
+                        <p class="mt-4">Optimizing your code...</p>
+                    </div>
+                    <pre id="output-code" class="language-javascript"></pre>
+                </div>
+                <div id="explanation" class="neubrutalism bg-[#4ECDC4] p-4 hidden">
+                    <h3 class="font-bold mb-2">Optimization Explanations</h3>
+                    <div id="explanation-content" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const codeInput = document.getElementById('code-input');
+        const languageSelect = document.getElementById('language-select');
+        const optimizeBtn = document.getElementById('optimize-btn');
+        const outputCode = document.getElementById('output-code');
+        const loading = document.getElementById('loading');
+        const explanation = document.getElementById('explanation');
+        const explanationContent = document.getElementById('explanation-content');
+
+        async function optimizeCode() {
+            const code = codeInput.value.trim();
+            if (!code) {
+                alert('Please enter some code to optimize');
+                return;
+            }
+
+            loading.style.display = 'block';
+            outputCode.textContent = '';
+            explanation.classList.add('hidden');
+
+            try {
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/ai', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer mAhV3tiCzyPlHd8Xgz6J1T4O36H2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: [{
+                            role: 'user',
+                            content: [{
+                                type: 'text',
+                                text: `Please optimize this ${languageSelect.value} code and provide detailed explanations of the changes made: ${code}`
+                            }]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                
+                // Parse AI response to separate code and explanations
+                const parts = data.message.split('EXPLANATIONS:');
+                const optimizedCode = parts[0].trim();
+                const explanations = parts[1] ? parts[1].trim().split('\n') : [];
+
+                // Display optimized code
+                outputCode.textContent = optimizedCode;
+                outputCode.className = `language-${languageSelect.value}`;
+                Prism.highlightElement(outputCode);
+
+                // Display explanations
+                explanationContent.innerHTML = '';
+                explanations.forEach(exp => {
+                    if (exp.trim()) {
+                        const expDiv = document.createElement('div');
+                        expDiv.className = 'neubrutalism bg-white p-2';
+                        expDiv.innerHTML = `<i class="bi bi-lightbulb text-yellow-500"></i> ${exp.trim()}`;
+                        explanationContent.appendChild(expDiv);
+                    }
+                });
+                explanation.classList.remove('hidden');
+
+            } catch (error) {
+                outputCode.textContent = 'Error optimizing code. Please try again.';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        optimizeBtn.addEventListener('click', optimizeCode);
+
+        // Example code for demonstration
+        const exampleCode = `function calculateSum(arr) {
+    let sum = 0;
+    for(let i = 0; i < arr.length; i++) {
+        sum = sum + arr[i];
+    }
+    return sum;
+}`;
+        codeInput.value = exampleCode;
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
